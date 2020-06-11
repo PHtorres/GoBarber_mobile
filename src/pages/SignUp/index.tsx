@@ -29,6 +29,10 @@ const SignUp: React.FC = () => {
 
     }, []);
 
+    const submitForm = () => {
+        formRef.current?.submitForm();
+    }
+
     return (
         <>
             <KeyboardAvoidingView
@@ -46,10 +50,30 @@ const SignUp: React.FC = () => {
                             <Title>Crie sua conta</Title>
                         </View>
                         <Form ref={formRef} onSubmit={handleSingUp}>
-                            <Input name="name" icon="user" placeholder="Nome" />
-                            <Input name="email" icon="mail" placeholder="E-Mail" />
-                            <Input name="password" icon="lock" placeholder="Senha" />
-                            <Button onPress={()=> formRef.current?.submitForm()}>Entrar</Button>
+                            <Input
+                                autoCapitalize="words"
+                                name="name"
+                                icon="user"
+                                placeholder="Nome"
+                            />
+                            <Input
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                name="email"
+                                icon="mail"
+                                placeholder="E-Mail"
+                            />
+                            <Input
+                                secureTextEntry
+                                textContentType="newPassword"
+                                name="password"
+                                icon="lock"
+                                placeholder="Senha"
+                                returnKeyType="send"
+                                onSubmitEditing={submitForm}
+                            />
+                            <Button onPress={submitForm}>Entrar</Button>
                         </Form>
                     </Container>
                 </ScrollView>
