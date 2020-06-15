@@ -1,5 +1,5 @@
 import React, { useRef, useCallback } from 'react';
-import { View, Image, KeyboardAvoidingView, Platform, ScrollView, TextInput } from 'react-native';
+import { View, Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -9,6 +9,11 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Form } from '@unform/mobile';
 import { FormHandles } from '@unform/core';
+import * as Yup from 'yup';
+
+import getValidationErrors from '../../utils/getValidationErrors';
+
+import {useAuth} from '../../hooks/Auth';
 
 import {
   Container,
@@ -19,7 +24,10 @@ import {
   CreateAccountButtonText
 } from './styles';
 
-
+interface SignInFormData {
+  email: string;
+  password: string;
+}
 
 const SignIn: React.FC = () => {
 
@@ -27,11 +35,38 @@ const SignIn: React.FC = () => {
   const passwordInputRef = useRef<TextInput>(null);
   const navigation = useNavigation();
 
-  const handleSingIn = useCallback((data: object) => {
+  const {signIn} = useAuth();
 
-    console.log(data);
+  const handleSignIn = useCallback(async (data: SignInFormData) => {
+    try {
 
-  }, []);
+        formRef.current?.setErrors({});
+
+        const schema = Yup.object().shape({
+            email: Yup.string().required('O e-mail é obrigatório').email('Digite um e-mail válido'),
+            password: Yup.string().required('A senha é obrigatória')
+        });
+
+        await schema.validate(data, {
+            abortEarly: false,
+        });
+
+        await signIn({
+            email: data.email,
+            password: data.password
+        });
+
+    } catch (error) {
+
+        if (error instanceof Yup.ValidationError) {
+            const errors = getValidationErrors(error);
+            formRef.current?.setErrors(errors);
+        } else {
+          Alert.alert('Erro na autenticação', 'Verifique suas credenciais');
+        }
+    }
+
+}, [signIn]);
 
   const submitForm = () => {
     formRef.current?.submitForm();
@@ -57,7 +92,7 @@ const SignIn: React.FC = () => {
             <View>
               <Title>Faça seu logon</Title>
             </View>
-            <Form ref={formRef} onSubmit={handleSingIn}>
+            <Form ref={formRef} onSubmit={handleSignIn}>
               <Input
                 name="email"
                 icon="mail"
