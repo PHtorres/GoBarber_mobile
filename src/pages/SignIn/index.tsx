@@ -13,7 +13,7 @@ import * as Yup from 'yup';
 
 import getValidationErrors from '../../utils/getValidationErrors';
 
-import {useAuth} from '../../hooks/Auth';
+import { useAuth } from '../../hooks/Auth';
 
 import {
   Container,
@@ -35,38 +35,39 @@ const SignIn: React.FC = () => {
   const passwordInputRef = useRef<TextInput>(null);
   const navigation = useNavigation();
 
-  const {signIn} = useAuth();
+  const { signIn } = useAuth();
 
   const handleSignIn = useCallback(async (data: SignInFormData) => {
+
     try {
 
-        formRef.current?.setErrors({});
+      formRef.current?.setErrors({});
 
-        const schema = Yup.object().shape({
-            email: Yup.string().required('O e-mail é obrigatório').email('Digite um e-mail válido'),
-            password: Yup.string().required('A senha é obrigatória')
-        });
+      const schema = Yup.object().shape({
+        email: Yup.string().required('O e-mail é obrigatório').email('Digite um e-mail válido'),
+        password: Yup.string().required('A senha é obrigatória')
+      });
 
-        await schema.validate(data, {
-            abortEarly: false,
-        });
+      await schema.validate(data, {
+        abortEarly: false,
+      });
 
-        await signIn({
-            email: data.email,
-            password: data.password
-        });
+      await signIn({
+        email: data.email,
+        password: data.password
+      });
 
     } catch (error) {
 
-        if (error instanceof Yup.ValidationError) {
-            const errors = getValidationErrors(error);
-            formRef.current?.setErrors(errors);
-        } else {
-          Alert.alert('Erro na autenticação', 'Verifique suas credenciais');
-        }
+      if (error instanceof Yup.ValidationError) {
+        const errors = getValidationErrors(error);
+        formRef.current?.setErrors(errors);
+      } else {
+        Alert.alert('Erro na autenticação', 'Verifique suas credenciais');
+      }
     }
 
-}, [signIn]);
+  }, [signIn]);
 
   const submitForm = () => {
     formRef.current?.submitForm();
