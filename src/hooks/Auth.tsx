@@ -39,7 +39,9 @@ export const AuthProvider: React.FC = ({ children }) => {
 
         const token = await AsyncStorage.getItem('@GoBarber:token');
         const user = await AsyncStorage.getItem('@GoBarber:user');
+        
         if (token && user) {
+            api.defaults.headers.authorization = `Bearer ${token}`;
             setData({ token, user: JSON.parse(user) });
         }
 
@@ -49,11 +51,12 @@ export const AuthProvider: React.FC = ({ children }) => {
     const signIn = useCallback(async ({ email, password }) => {
 
         const response = await api.post('sessions', { email, password });
-        console.log('response', response);
         const { token, user } = response.data;
 
         await AsyncStorage.setItem('@GoBarber:token', token);
         await AsyncStorage.setItem('@GoBarber:user', JSON.stringify(user));
+
+        api.defaults.headers.authorization = `Bearer ${token}`;
 
         setData({ token, user });
 
