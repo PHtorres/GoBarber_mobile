@@ -15,7 +15,7 @@ flex:1;
 export const Header = styled.View`
 
 padding: 24px;
-padding-top: ${ios?getStatusBarHeight() + 24:24}px;
+padding-top: ${getStatusBarHeight() + 24}px;
 background: #28262e;
 flex-direction:row;
 justify-content:space-between;
