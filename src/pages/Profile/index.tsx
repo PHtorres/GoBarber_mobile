@@ -10,6 +10,7 @@ import { FormHandles } from '@unform/core';
 
 import * as Yup from 'yup';
 import getValidationErrors from '../../utils/getValidationErrors';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 
 import api from '../../services/api';
 
@@ -22,49 +23,46 @@ import {
 } from './styles';
 import { useAuth } from '../../hooks/Auth';
 
-interface SignUpFormData {
+interface ProfileFormData {
     name: string;
     email: string;
+    old_password: string;
     password: string;
+    password_confirmation: string;
 }
 
 const Profile: React.FC = () => {
 
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const formRef = useRef<FormHandles>(null);
     const navigation = useNavigation();
 
-    const handleSignUp = useCallback(async (data: SignUpFormData) => {
+    const handleUpdateProfile = useCallback(async (data: ProfileFormData) => {
 
         try {
 
             formRef.current?.setErrors({});
 
-            const schema = Yup.object().shape({
-                name: Yup.string().required('O nome é obrigatório'),
-                email: Yup.string().required('O e-mail é obrigatório').email('Digite um e-mail válido'),
-                password: Yup.string().min(6, 'Digite pelo menos 6 caracteres')
-            });
+            const formData = Object.assign({
+                name: data.name,
+                email: data.email
+            }, data.old_password ? {
+                old_password: data.old_password,
+                password: data.password,
+                password_confirmation: data.password_confirmation
+            } : {});
 
-            await schema.validate(data, {
-                abortEarly: false,
-            });
+            const response = await api.put('profile', formData);
 
-            await api.post('users', data);
+            updateUser(response.data);
 
-            Alert.alert('Cadastro realizado com sucesso!', 'Você já pode fazer login no GoBarner');
+            Alert.alert('Perfil atualizado com sucesso!', '');
 
             navigation.goBack();
 
         } catch (error) {
 
-            if (error instanceof Yup.ValidationError) {
-                const errors = getValidationErrors(error);
-                formRef.current?.setErrors(errors);
-                return;
-            }
-
-            Alert.alert('Erro no cadastro', 'Tente novamente mais tarde');
+            Alert.alert('Erro na atualização do perfil', 'Tente novamente mais tarde');
 
         }
 
@@ -77,6 +75,37 @@ const Profile: React.FC = () => {
     const handleGoBack = useCallback(() => {
         navigation.goBack();
     }, []);
+
+    const handleUpdateAvatar = useCallback(async () => {
+
+        launchCamera({
+            mediaType: 'photo',
+        }, response => {
+            if (response.didCancel) {
+                return;
+            }
+
+            if (response.errorCode) {
+                Alert.alert('Erro ao pegar imagem', response.errorMessage);
+                return;
+            }
+
+            uploadAvatarImage(response.uri || '');
+        });
+
+    }, [updateUser, user]);
+
+    const uploadAvatarImage = async (uriImage:string) =>{
+        const data = new FormData();
+        data.append('avatar', {
+            type: 'image/jpeg',
+            name: `${user.id}.jpg`,
+            uri: uriImage
+        });
+
+        debugger
+        const apiresponse = await api.patch('users/avatar', data);
+    }
 
     return (
         <>
@@ -91,15 +120,18 @@ const Profile: React.FC = () => {
                 >
                     <Container>
                         <BackButton onPress={handleGoBack}>
-                            <Icon name="chevron-left" size={24} color="#999591"/>
+                            <Icon name="chevron-left" size={24} color="#999591" />
                         </BackButton>
-                        <UserAvatarButton onPress={() => { }}>
+                        <UserAvatarButton onPress={handleUpdateAvatar}>
                             <UserAvatar source={{ uri: user.avatar_url }} />
                         </UserAvatarButton>
                         <View>
                             <Title>Meu Perfil</Title>
                         </View>
-                        <Form ref={formRef} onSubmit={handleSignUp}>
+                        <Form
+                            initialData={{ name: user.name, email: user.email }}
+                            ref={formRef}
+                            onSubmit={handleUpdateProfile}>
                             <Input
                                 autoCapitalize="words"
                                 name="name"
